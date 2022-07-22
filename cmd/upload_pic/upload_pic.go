@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/atotto/clipboard"
+	"github.com/blackswords/roPic/internal/config"
 	"os"
-	"path/filepath"
 )
 
 // configPathName 是配置文件相对于运行程序的路径
@@ -17,7 +17,7 @@ var configPathName = "config.yml"
 func printHelp(s string) {
 	println(s)
 	println("Param struct:")
-	println("*.exe upload <filename>")
+	println("\t*.exe upload|-u <filename>")
 }
 
 // CreateURLtoString 将传入的url进行改装，使其变为需要的格式字符串并返回
@@ -28,39 +28,39 @@ func CreateURLtoString(url string) (copyString string) {
 }
 
 func main() {
-	CheckConfigFile()
-
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		println(err.Error())
-	}
-	configPathName = dir + "/" + configPathName
 	al := len(os.Args)
 
-	if al < 2 {
+	if al < 3 {
 		printHelp("Too least param.")
 	} else {
-		if os.Args[1] == "upload" {
+		if os.Args[1] == "upload" || os.Args[1] == "-u" {
 			if al == 2 {
 				printHelp("Need the third param.")
 				return
 			}
 
+			config.InitPicConfig()
+
 			// 遍历参数中的文件，上传
 			for i := 2; i < al; i++ {
 				path := os.Args[i]
-				var t TencentYun
-				t.InitConfig()
+				//var t TencentYun
+				//t.InitConfig()
 
-				_, key := UploadFile(path, t)
-				err := clipboard.WriteAll(CreateURLtoString(key))
+				link, err := config.UploadFile(path)
+				if err != nil {
+					println(err.Error())
+					continue
+				}
+				//_, key := UploadFile(path, t)
+				err = clipboard.WriteAll(CreateURLtoString(link))
 				if err != nil {
 					println(err.Error())
 				}
 				if i == 2 {
 					fmt.Printf("[UPLOADER SUCCESS]:\n")
 				}
-				fmt.Printf("%s\n", key)
+				fmt.Printf("%s\n", link)
 			}
 
 		}
